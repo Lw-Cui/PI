@@ -1,7 +1,8 @@
 #include <cstdio>
+#include <cstring>
 #include <cassert>
-const int shift = 28;
-const unsigned BASE = 1 << shift;
+const int shift = 32;
+const unsigned long long BASE = (unsigned long long)1 << shift;
 const int LEN = 10000000;
 
 void add(unsigned dest[], unsigned src[]) {
@@ -20,7 +21,7 @@ void minus(unsigned dest[], unsigned src[]) {
 	for (int i = LEN - 1; i >= 0; i--)
 		if (dest[i] < src[i] + (borrow? 1: 0)) {
 			assert(i && "Oh borrow overflow!");
-			dest[i] = (long long)dest[i] + BASE - src[i] - (borrow? 1: 0);
+			dest[i] = (unsigned long long)dest[i] + BASE - src[i] - (borrow? 1: 0);
 			borrow = true;
 		} else {
 			dest[i] = dest[i] - src[i] - (borrow? 1: 0);
@@ -31,8 +32,9 @@ void minus(unsigned dest[], unsigned src[]) {
 void multiply(unsigned dest[], unsigned num) {
 	unsigned carry = 0;
 	for (int i = LEN - 1; i >= 0; i--) {
-		unsigned long long tmp = (long long)num * dest[i];
-		dest[i] = (tmp & (BASE - 1)) + carry;
+		unsigned long long tmp = (unsigned long long)num * dest[i] + carry;
+		assert((tmp & (BASE - 1)) < BASE && "multiply truncation");
+		dest[i] = (tmp & (BASE - 1));
 		carry = tmp >> shift;
 		assert((i || !carry) && "Oh multiply overflow!");
 	}
@@ -44,6 +46,7 @@ void divide(unsigned dest[], unsigned num) {
 		s <<= shift;
 		s += dest[i];
 		if (s >= num) {
+			assert(s / num < BASE && "divide truncation");
 			dest[i] = s / num;
 			s %= num;
 		} else {
@@ -86,8 +89,40 @@ void test_add_minus() {
 	delete[] ptr2;
 }
 
+
+inline void print(unsigned num) {
+	for (int pos = 28; pos >= 0; pos -= 4)
+		printf("%01X", (num >> pos) & 0xF);
+}
+
+void test_print() {
+	unsigned tmp = 180150013;
+	print(tmp);
+}
+
+inline void output(unsigned array[]) {
+	printf("3.\n");
+	for (int i = 1; i < LEN; i++)
+		print(array[i]);
+	printf("\n");
+}
+
+void shift_right(unsigned sub[], int num) {
+	for (int i = LEN - 1; i >= 0; i++) {
+	}
+}
+
+void cal_sub_Pi(unsigned Pi[], unsigned k) {
+	unsigned *sub = new unsigned[LEN];
+	memset(sub, 0, sizeof(unsigned) * LEN);
+
+	sub[0] = 4;
+	delete[] sub;
+}
+
 int main(int argc, char *argv[]) {
 	test_add_minus();
 	test_multiply_divide();
+	test_print();
 	return 0;
 }
