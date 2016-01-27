@@ -3,8 +3,8 @@
 #include <cassert>
 const int SHIFT = 32;
 const unsigned long long BASE = (unsigned long long)1 << SHIFT;
-const int LEN	=	125001;
-const int LOOP	=	100000;
+const int LEN = 125002;
+const int VALID = LEN - 1;
 
 void add(unsigned dest[], unsigned src[]) {
 	for (int i = LEN - 1; i >= 0; i--)
@@ -104,7 +104,7 @@ void test_print() {
 inline void output(unsigned array[]) {
 	printf("%d.\n", array[0]);
 	unsigned digit = 0;
-	for (int i = 1; i < LEN; i++)
+	for (int i = 1; i < VALID; i++)
 		for (int pos = SHIFT - 4; pos >= 0; pos -= 4) {
 			printf("%01X", (array[i] >> pos) & 0xF);
 			if (++digit == 64) {
@@ -163,7 +163,7 @@ void test_shift_right() {
 	delete[] sub;
 }
 
-void cal_sub_Pi(unsigned Pi[], unsigned k) {
+bool cal_sub_Pi(unsigned Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
 	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
 
@@ -172,6 +172,13 @@ void cal_sub_Pi(unsigned Pi[], unsigned k) {
 	divide(sub, 8 * k + 1);
 	shift_right(sub, 4 * k);
 	add(Pi,	sub);
+
+	bool zero = true;
+	for (int i = 0; i < LEN; i++)
+		if (sub[i] != 0)
+			zero = false;
+	if (zero)
+		return false;
 
 	memset(sub, 0, sizeof(unsigned) * LEN);
 	sub[0] = 2;
@@ -192,6 +199,7 @@ void cal_sub_Pi(unsigned Pi[], unsigned k) {
 	minus(Pi, sub);
 
 	delete[] sub;
+	return true;
 }
 
 
@@ -203,9 +211,8 @@ int main(int argc, char *argv[]) {
 	test_shift_right();
 	*/
 	unsigned *Pi = new unsigned[LEN];
-	for (unsigned k = 0; k < LOOP; k++)
-		cal_sub_Pi(Pi, k);
-	output(Pi);
+	for (unsigned k = 0; cal_sub_Pi(Pi, k); k++);
+	//output(Pi);
 	delete[] Pi;
 	return 0;
 }
