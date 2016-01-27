@@ -1,9 +1,10 @@
 #include <cstdio>
 #include <cstring>
 #include <cassert>
-const int shift = 32;
-const unsigned long long BASE = (unsigned long long)1 << shift;
-const int LEN = 10000000;
+const int SHIFT = 32;
+const unsigned long long BASE = (unsigned long long)1 << SHIFT;
+const int LEN	=	1000;
+const int LOOP	=	5000000;
 
 void add(unsigned dest[], unsigned src[]) {
 	for (int i = LEN - 1; i >= 0; i--)
@@ -35,7 +36,7 @@ void multiply(unsigned dest[], unsigned num) {
 		unsigned long long tmp = (unsigned long long)num * dest[i] + carry;
 		assert((tmp & (BASE - 1)) < BASE && "multiply truncation");
 		dest[i] = (tmp & (BASE - 1));
-		carry = tmp >> shift;
+		carry = tmp >> SHIFT;
 		assert((i || !carry) && "Oh multiply overflow!");
 	}
 }
@@ -43,7 +44,7 @@ void multiply(unsigned dest[], unsigned num) {
 void divide(unsigned dest[], unsigned num) {
 	unsigned long long s = 0;
 	for (int i = 0; i < LEN; i++) {
-		s <<= shift;
+		s <<= SHIFT;
 		s += dest[i];
 		if (s >= num) {
 			assert(s / num < BASE && "divide truncation");
@@ -91,7 +92,7 @@ void test_add_minus() {
 
 
 inline void print(unsigned num) {
-	for (int pos = 28; pos >= 0; pos -= 4)
+	for (int pos = SHIFT - 4; pos >= 0; pos -= 4)
 		printf("%01X", (num >> pos) & 0xF);
 }
 
@@ -101,28 +102,58 @@ void test_print() {
 }
 
 inline void output(unsigned array[]) {
-	printf("3.\n");
+	printf("%d.\n", array[0]);
+	unsigned digit = 0;
 	for (int i = 1; i < LEN; i++)
-		print(array[i]);
+		for (int pos = SHIFT - 4; pos >= 0; pos -= 4) {
+			printf("%01X", (array[i] >> pos) & 0xF);
+			if (++digit == 64) {
+				printf("\n");
+				digit = 0;
+			}
+		}
 	printf("\n");
 }
 
+/*
 void shift_right(unsigned sub[], int num) {
-	for (int i = LEN - 1; i >= 0; i++) {
-	}
+	memmove((void *)sub + num, sub, sizeof(unsigned) * LEN - num);
+	memset(sub, 0, num);
 }
 
-void cal_sub_Pi(unsigned Pi[], unsigned k) {
+void test_shift_right() {
 	unsigned *sub = new unsigned[LEN];
-	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 0xF0;
+	shift_right(sub, sizeof(unsigned) * (LEN - 1));
+	assert(
+	delete[] sub;
+}
+*/
 
-	sub[0] = 4;
+void cal_Pi(unsigned Pi[]) {
+	unsigned *sub = new unsigned[LEN];
+
+	for (unsigned i = 1; i < LOOP; i++) {
+		memset(sub, 0, sizeof(unsigned) * LEN);
+		sub[0] = 4;
+		divide(sub, 2 * i - 1);
+		if (i % 2)
+			add(Pi, sub);
+		else
+			minus(Pi, sub);
+	}
 	delete[] sub;
 }
 
 int main(int argc, char *argv[]) {
+	/*
 	test_add_minus();
 	test_multiply_divide();
 	test_print();
+	*/
+	unsigned *Pi = new unsigned[LEN];
+	cal_Pi(Pi);
+	output(Pi);
+	delete[] Pi;
 	return 0;
 }
