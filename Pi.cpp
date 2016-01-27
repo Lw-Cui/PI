@@ -3,8 +3,8 @@
 #include <cassert>
 const int SHIFT = 32;
 const unsigned long long BASE = (unsigned long long)1 << SHIFT;
-const int LEN	=	1000;
-const int LOOP	=	5000000;
+const int LEN	=	125001;
+const int LOOP	=	100000;
 
 void add(unsigned dest[], unsigned src[]) {
 	for (int i = LEN - 1; i >= 0; i--)
@@ -115,44 +115,96 @@ inline void output(unsigned array[]) {
 	printf("\n");
 }
 
-/*
-void shift_right(unsigned sub[], int num) {
-	memmove((void *)sub + num, sub, sizeof(unsigned) * LEN - num);
-	memset(sub, 0, num);
+void shift_right(unsigned sub[], unsigned num) {
+	unsigned uint_bit = 8 * sizeof(unsigned);
+	if (LEN * uint_bit <= num) {
+		memset(sub, 0, sizeof(unsigned) * LEN);
+		return;
+	}
+	if (num >= uint_bit) {
+		memmove(sub + num / uint_bit, 
+				sub, sizeof(unsigned) * LEN - num / uint_bit * sizeof(unsigned));
+		memset(sub, 0, num / uint_bit * sizeof(unsigned));
+	}
+	unsigned mod = num % uint_bit;
+	unsigned mask = (1 << mod) - 1;
+	for (int i = LEN - 1; i > 0; i--) {
+		sub[i] >>= mod;
+		sub[i] |= (sub[i - 1] & mask) << (uint_bit - mod);
+	}
+	sub[0] >>= mod;
 }
 
 void test_shift_right() {
 	unsigned *sub = new unsigned[LEN];
-	sub[0] = 0xF0;
-	shift_right(sub, sizeof(unsigned) * (LEN - 1));
-	assert(
+	for (int i = 0; i < LEN; i++)
+		sub[i] = 0xFFFFFFFF;
+	shift_right(sub, sizeof(unsigned) * 8 * (LEN - 1) + 6);
+	assert(sub[LEN - 1] == 0x3FFFFFF && "shift error.");
+	for (int i = 0; i < LEN - 1; i++)
+		assert(sub[i] == 0 && "shift error.");
+
+	for (int i = 0; i < LEN; i++)
+		sub[i] = 0xABCDDCBE;
+	shift_right(sub, sizeof(unsigned) * 8 * (LEN - 2) + 4);
+	assert(sub[LEN - 2] == 0xABCDDCB && "shift error.");
+	assert(sub[LEN - 1] == 0xEABCDDCB  && "shift error.");
+	for (int i = 0; i < LEN - 2; i++)
+		assert(sub[i] == 0 && "shift error.");
+	delete[] sub;
+
+	sub = new unsigned[3];
+	sub[0] = 0;
+	sub[1] = 0x19999999;
+	sub[2] = 0x99999999;
+	shift_right(sub, 8);
+	assert(sub[1] == 0x00199999 && "shift error!");
+	assert(sub[2] == 0x99999999 && "shift error!");
 	delete[] sub;
 }
-*/
 
-void cal_Pi(unsigned Pi[]) {
+void cal_sub_Pi(unsigned Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
+	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
 
-	for (unsigned i = 1; i < LOOP; i++) {
-		memset(sub, 0, sizeof(unsigned) * LEN);
-		sub[0] = 4;
-		divide(sub, 2 * i - 1);
-		if (i % 2)
-			add(Pi, sub);
-		else
-			minus(Pi, sub);
-	}
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 8 * k + 1);
+	shift_right(sub, 4 * k);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 2;
+	divide(sub, 8 * k + 4);
+	shift_right(sub, 4 * k);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 8 * k + 5);
+	shift_right(sub, 4 * k);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 8 * k + 6);
+	shift_right(sub, 4 * k);
+	minus(Pi, sub);
+
 	delete[] sub;
 }
+
 
 int main(int argc, char *argv[]) {
 	/*
 	test_add_minus();
 	test_multiply_divide();
 	test_print();
+	test_shift_right();
 	*/
 	unsigned *Pi = new unsigned[LEN];
-	cal_Pi(Pi);
+	for (unsigned k = 0; k < LOOP; k++)
+		cal_sub_Pi(Pi, k);
 	output(Pi);
 	delete[] Pi;
 	return 0;
