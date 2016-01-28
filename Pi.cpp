@@ -167,6 +167,89 @@ void test_shift_right() {
 
 bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
+	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 256;
+	divide(sub, 10 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		minus(Pi, sub);
+	else
+		add(Pi,	sub);
+
+	bool zero = true;
+	for (int i = 0; i < LEN; i++)
+		if (sub[i] != 0)
+			zero = false;
+	if (zero) {
+		delete[] sub;
+		return false;
+	}
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 32;
+	divide(sub, 4 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		add(Pi,	sub);
+	else
+		minus(Pi, sub);
+
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 4 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		add(Pi,	sub);
+	else
+		minus(Pi, sub);
+
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 64;
+	divide(sub, 10 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		add(Pi,	sub);
+	else
+		minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 5);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		add(Pi,	sub);
+	else
+		minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 7);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		add(Pi,	sub);
+	else
+		minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 10 * k + 9);
+	shift_right(sub, 10 * k + 6);
+	if (k & 1)
+		minus(Pi, sub);
+	else
+		add(Pi,	sub);
+
+	delete[] sub;
+	return true;
+
+}
+/*
+bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
+	unsigned *sub = new unsigned[LEN];
 	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
 
 	memset(sub, 0, sizeof(unsigned) * LEN);
@@ -179,8 +262,10 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	for (int i = 0; i < LEN; i++)
 		if (sub[i] != 0)
 			zero = false;
-	if (zero)
+	if (zero) {
+		delete[] sub;
 		return false;
+	}
 
 	memset(sub, 0, sizeof(unsigned) * LEN);
 	sub[0] = 2;
@@ -203,6 +288,7 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	delete[] sub;
 	return true;
 }
+*/
 
 void carry(unsigned long long Pi[]) {
 	for (int i = LEN - 1; i >= 0; i--)
