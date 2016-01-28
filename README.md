@@ -1,13 +1,13 @@
-#Life of ![](./pi.png)
+#Life of ![](./formula/pi.png)
 
 * **Gottfried Wilhelm Leibniz formula**  
 
-![](./L.png) 
+![](./formula/L.png) 
 
 * **Bailey–Borwein–Plouffe formula**  
  
-![](./BBP.png) 
+![](./formula/BBP.png) 
 
 * **Fabrice Bellard formula**  
 
-![](./FB.png) 
+![](./formula/FB.png) 
