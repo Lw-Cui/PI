@@ -165,210 +165,54 @@ void test_shift_right() {
 	delete[] sub;
 }
 
-/*
-bool even(unsigned long long Pi[], unsigned k) {
-	unsigned *sub = new unsigned[LEN];
-	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
-
+void cal_fraction(unsigned sub[], unsigned numerator, unsigned denominator,
+		unsigned bit_num) {
 	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 10 * k + 9);
-	shift_right(sub, 10 * k + 6);
-	add(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 256;
-	divide(sub, 10 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	add(Pi, sub);
-
-	bool zero = true;
-	for (int i = 0; i < LEN; i++)
-		if (sub[i] != 0)
-			zero = false;
-	if (zero) {
-		delete[] sub;
-		return false;
-	}
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 32;
-	divide(sub, 4 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 4 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 64;
-	divide(sub, 10 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 5);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 7);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	delete[] sub;
-	return true;
-}
-
-bool odd(unsigned long long Pi[], unsigned k) {
-	unsigned *sub = new unsigned[LEN];
-	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 32;
-	divide(sub, 4 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	add(Pi,	sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 4 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	add(Pi,	sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 64;
-	divide(sub, 10 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	add(Pi,	sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 5);
-	shift_right(sub, 10 * k + 6);
-	add(Pi,	sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 7);
-	shift_right(sub, 10 * k + 6);
-	add(Pi,	sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 10 * k + 9);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 256;
-	divide(sub, 10 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	minus(Pi, sub);
-
-	bool zero = true;
-	for (int i = 0; i < LEN; i++)
-		if (sub[i] != 0)
-			zero = false;
-	if (zero) {
-		delete[] sub;
-		return false;
-	}
-
-	delete[] sub;
-	return true;
-
+	sub[0] = numerator;
+	divide(sub, denominator);
+	shift_right(sub, bit_num);
 }
 
 bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
-	if (k & 1)
-		return odd(Pi, k);
-	else
-		return even(Pi, k);
-}
-*/
-bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
+	unsigned bit_num = 10 * k + 6;
 	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 256;
-	divide(sub, 10 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		minus(Pi, sub);
-	else
-		add(Pi,	sub);
+	cal_fraction(sub, 256, 10 * k + 1, bit_num);
+	if (k & 1) minus(Pi, sub);
+	else add(Pi, sub);
 
 	bool zero = true;
 	for (int i = 0; i < LEN; i++)
-		if (sub[i] != 0)
-			zero = false;
+		if (sub[i] != 0) zero = false;
 	if (zero) {
 		delete[] sub;
 		return false;
 	}
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 32;
-	divide(sub, 4 * k + 1);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		add(Pi,	sub);
-	else
-		minus(Pi, sub);
+	cal_fraction(sub, 32, 4 * k + 1, bit_num);
+	if (k & 1) add(Pi,	sub);
+	else minus(Pi, sub);
 
+	cal_fraction(sub, 1, 4 * k + 3, bit_num);
+	if (k & 1) add(Pi,	sub);
+	else minus(Pi, sub);
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 4 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		add(Pi,	sub);
-	else
-		minus(Pi, sub);
+	cal_fraction(sub, 64, 10 * k + 3, bit_num);
+	if (k & 1) add(Pi,	sub);
+	else minus(Pi, sub);
 
+	cal_fraction(sub, 4, 10 * k + 5, bit_num);
+	if (k & 1) add(Pi,	sub);
+	else minus(Pi, sub);
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 64;
-	divide(sub, 10 * k + 3);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		add(Pi,	sub);
-	else
-		minus(Pi, sub);
+	cal_fraction(sub, 4, 10 * k + 7, bit_num);
+	if (k & 1) add(Pi,	sub);
+	else minus(Pi, sub);
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 5);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		add(Pi,	sub);
-	else
-		minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 10 * k + 7);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		add(Pi,	sub);
-	else
-		minus(Pi, sub);
-
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 10 * k + 9);
-	shift_right(sub, 10 * k + 6);
-	if (k & 1)
-		minus(Pi, sub);
-	else
-		add(Pi,	sub);
+	cal_fraction(sub, 1, 10 * k + 9, bit_num);
+	if (k & 1) minus(Pi, sub);
+	else add(Pi, sub);
 
 	delete[] sub;
 	return true;
@@ -376,6 +220,7 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 }
 
 /*
+   BBP formula
 bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
 	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
@@ -418,7 +263,7 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 }
 */
 
-void carry(unsigned long long Pi[]) {
+void Pi_carry(unsigned long long Pi[]) {
 	for (int i = LEN - 1; i >= 0; i--)
 		if (Pi[i] >= BASE) {
 			assert(i && "long long Pi overflow.");
@@ -431,7 +276,7 @@ void test_carray() {
 	unsigned long long *ptr = new unsigned long long[LEN];
 	ptr[0] = 0;
 	ptr[1] = 0xFFFFFFFFFF;
-	carry(ptr);
+	Pi_carry(ptr);
 	assert(ptr[0] == 0xFF && "carry error.");
 	assert(ptr[1] == 0xFFFFFFFF && "carry error.");
 	delete[] ptr;
@@ -453,7 +298,9 @@ int main(int argc, char *argv[]) {
 	}
 	unsigned long long *sub_Pi = new unsigned long long[LEN];
 	unsigned long long *Pi = new unsigned long long[LEN];
-	sub_Pi[0] = 10;
+	int compensation = 10;
+
+	sub_Pi[0] = compensation;
 	MPI_Barrier(MPI_COMM_WORLD);
 	elapsed_time = -MPI_Wtime();
 	int size, id;
@@ -464,8 +311,8 @@ int main(int argc, char *argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	elapsed_time += MPI_Wtime();
 	if (!id) {
-		Pi[0] -= 10 * size;
-		carry(Pi);
+		Pi[0] -= compensation * size;
+		Pi_carry(Pi);
 		output(Pi);
 		printf("%.3fs\n", elapsed_time);
 	}
