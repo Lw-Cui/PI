@@ -1,7 +1,7 @@
 SRC :=	${wildcard	*.cpp}
 TAR :=	${patsubst %.cpp, %.out, $(SRC)}
 
-CC	:=	g++
+CC	:=	mpic++
 CFLAG := -g -O2 -Wall
 
 all:	$(TAR)

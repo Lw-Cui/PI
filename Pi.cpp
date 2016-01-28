@@ -1,12 +1,14 @@
 #include <cstdio>
+#include <cstdlib>
+#include <mpi.h>
 #include <cstring>
 #include <cassert>
 const int SHIFT = 32;
 const unsigned long long BASE = (unsigned long long)1 << SHIFT;
-const int LEN = 125002;
-const int VALID = LEN - 1;
+int VALID = 1000000;
+int LEN = VALID / 8 + 2;
 
-void add(unsigned dest[], unsigned src[]) {
+void add(unsigned long long dest[], unsigned src[]) {
 	for (int i = LEN - 1; i >= 0; i--)
 		if (dest[i] >= BASE - src[i]) {
 			assert(i && "Oh carry overflow!");
@@ -17,7 +19,7 @@ void add(unsigned dest[], unsigned src[]) {
 		}
 }
 
-void minus(unsigned dest[], unsigned src[]) {
+void minus(unsigned long long dest[], unsigned src[]) {
 	bool borrow = false;
 	for (int i = LEN - 1; i >= 0; i--)
 		if (dest[i] < src[i] + (borrow? 1: 0)) {
@@ -63,14 +65,15 @@ void test_multiply_divide() {
 	unsigned num = 123454321;
 	multiply(ptr, num);
 	divide(ptr, num);
-	for (size_t i = 0; i < LEN; i++)
-		assert(ptr[i] == i && "multiply or divide error.");
+	for (int i = 0; i < LEN; i++)
+		assert(ptr[i] == (unsigned)i && "multiply or divide error.");
 	delete[] ptr;
 }
 
 void test_add_minus() {
-	unsigned *ptr = new unsigned[LEN], *ptr2 = new unsigned[LEN];
-	for (size_t i = 0; i < LEN; i++) {
+	unsigned long long *ptr = new unsigned long long[LEN];
+	unsigned *ptr2 = new unsigned[LEN];
+	for (int i = 0; i < LEN; i++) {
 		ptr[i] = LEN - i;
 		ptr2[i] = ptr[i] + 1;
 	}
@@ -84,8 +87,8 @@ void test_add_minus() {
 
 	add(ptr, ptr2);
 	assert(ptr[0] == 1 && "ptr[0] add error.");
-	for (size_t i = 1; i < LEN; i++)
-		assert(ptr[i] == LEN - i && "addition error.");
+	for (int i = 1; i < LEN; i++)
+		assert(ptr[i] == (unsigned)LEN - i && "addition error.");
 	delete[] ptr;
 	delete[] ptr2;
 }
@@ -101,16 +104,14 @@ void test_print() {
 	print(tmp);
 }
 
-inline void output(unsigned array[]) {
-	printf("%d.\n", array[0]);
-	unsigned digit = 0;
-	for (int i = 1; i < VALID; i++)
+inline void output(unsigned long long array[]) {
+	printf("%llu.\n", array[0]);
+	int digit = 0;
+	for (int i = 1; digit < VALID; i++)
 		for (int pos = SHIFT - 4; pos >= 0; pos -= 4) {
-			printf("%01X", (array[i] >> pos) & 0xF);
-			if (++digit == 64) {
+			printf("%01X", ((unsigned)array[i] >> pos) & 0xF);
+			if (++digit % 64 == 0)
 				printf("\n");
-				digit = 0;
-			}
 		}
 	printf("\n");
 }
@@ -135,6 +136,7 @@ void shift_right(unsigned sub[], unsigned num) {
 	sub[0] >>= mod;
 }
 
+//TODO
 void test_shift_right() {
 	unsigned *sub = new unsigned[LEN];
 	for (int i = 0; i < LEN; i++)
@@ -163,7 +165,7 @@ void test_shift_right() {
 	delete[] sub;
 }
 
-bool cal_sub_Pi(unsigned Pi[], unsigned k) {
+bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
 	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
 
@@ -202,6 +204,24 @@ bool cal_sub_Pi(unsigned Pi[], unsigned k) {
 	return true;
 }
 
+void carry(unsigned long long Pi[]) {
+	for (int i = LEN - 1; i >= 0; i--)
+		if (Pi[i] >= BASE) {
+			assert(i && "long long Pi overflow.");
+			Pi[i - 1] += (Pi[i] & ~(BASE - 1)) >> SHIFT;
+			Pi[i] &= (BASE - 1);
+		}
+}
+
+void test_carray() {
+	unsigned long long *ptr = new unsigned long long[LEN];
+	ptr[0] = 0;
+	ptr[1] = 0xFFFFFFFFFF;
+	carry(ptr);
+	assert(ptr[0] == 0xFF && "carry error.");
+	assert(ptr[1] == 0xFFFFFFFF && "carry error.");
+	delete[] ptr;
+}
 
 int main(int argc, char *argv[]) {
 	/*
@@ -209,10 +229,32 @@ int main(int argc, char *argv[]) {
 	test_multiply_divide();
 	test_print();
 	test_shift_right();
+	test_carray();
 	*/
-	unsigned *Pi = new unsigned[LEN];
-	for (unsigned k = 0; cal_sub_Pi(Pi, k); k++);
-	//output(Pi);
+	double elapsed_time;
+	MPI_Init(&argc, &argv);
+	if (argc == 2) {
+		VALID = atoi(argv[1]);
+		LEN = VALID / 8 + 2;
+	}
+	unsigned long long *sub_Pi = new unsigned long long[LEN];
+	unsigned long long *Pi = new unsigned long long[LEN];
+	MPI_Barrier(MPI_COMM_WORLD);
+	elapsed_time = -MPI_Wtime();
+	int size, id;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	for (unsigned k = id; cal_sub_Pi(sub_Pi, k); k += size);
+	MPI_Reduce(sub_Pi, Pi, LEN, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	elapsed_time += MPI_Wtime();
+	if (!id) {
+		carry(Pi);
+		output(Pi);
+		printf("%.3fs\n", elapsed_time);
+	}
+	delete[] sub_Pi;
 	delete[] Pi;
+	MPI_Finalize();
 	return 0;
 }
