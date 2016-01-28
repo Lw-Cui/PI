@@ -165,6 +165,133 @@ void test_shift_right() {
 	delete[] sub;
 }
 
+/*
+bool even(unsigned long long Pi[], unsigned k) {
+	unsigned *sub = new unsigned[LEN];
+	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 10 * k + 9);
+	shift_right(sub, 10 * k + 6);
+	add(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 256;
+	divide(sub, 10 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	add(Pi, sub);
+
+	bool zero = true;
+	for (int i = 0; i < LEN; i++)
+		if (sub[i] != 0)
+			zero = false;
+	if (zero) {
+		delete[] sub;
+		return false;
+	}
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 32;
+	divide(sub, 4 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 4 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 64;
+	divide(sub, 10 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 5);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 7);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	delete[] sub;
+	return true;
+}
+
+bool odd(unsigned long long Pi[], unsigned k) {
+	unsigned *sub = new unsigned[LEN];
+	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 32;
+	divide(sub, 4 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 4 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 64;
+	divide(sub, 10 * k + 3);
+	shift_right(sub, 10 * k + 6);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 5);
+	shift_right(sub, 10 * k + 6);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 4;
+	divide(sub, 10 * k + 7);
+	shift_right(sub, 10 * k + 6);
+	add(Pi,	sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 1;
+	divide(sub, 10 * k + 9);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	memset(sub, 0, sizeof(unsigned) * LEN);
+	sub[0] = 256;
+	divide(sub, 10 * k + 1);
+	shift_right(sub, 10 * k + 6);
+	minus(Pi, sub);
+
+	bool zero = true;
+	for (int i = 0; i < LEN; i++)
+		if (sub[i] != 0)
+			zero = false;
+	if (zero) {
+		delete[] sub;
+		return false;
+	}
+
+	delete[] sub;
+	return true;
+
+}
+
+bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
+	if (k & 1)
+		return odd(Pi, k);
+	else
+		return even(Pi, k);
+}
+*/
 bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
 	assert((unsigned long long)k * 10 + 9 < BASE && "sub Pi overflow.");
@@ -247,6 +374,7 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	return true;
 
 }
+
 /*
 bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	unsigned *sub = new unsigned[LEN];
@@ -325,6 +453,7 @@ int main(int argc, char *argv[]) {
 	}
 	unsigned long long *sub_Pi = new unsigned long long[LEN];
 	unsigned long long *Pi = new unsigned long long[LEN];
+	sub_Pi[0] = 10;
 	MPI_Barrier(MPI_COMM_WORLD);
 	elapsed_time = -MPI_Wtime();
 	int size, id;
@@ -335,6 +464,7 @@ int main(int argc, char *argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	elapsed_time += MPI_Wtime();
 	if (!id) {
+		Pi[0] -= 10 * size;
 		carry(Pi);
 		output(Pi);
 		printf("%.3fs\n", elapsed_time);
