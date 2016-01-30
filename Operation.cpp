@@ -60,10 +60,6 @@ void print(unsigned num) {
 		printf("%01X", (num >> pos) & 0xF);
 }
 
-void test_print() {
-	unsigned tmp = 180150013;
-	print(tmp);
-}
 
 void output(unsigned long long array[]) {
 	printf("%llu.\n", array[0]);
@@ -95,4 +91,13 @@ void shift_right(unsigned sub[], unsigned num) {
 		sub[i] |= (sub[i - 1] & mask) << (uint_bit - mod);
 	}
 	sub[0] >>= mod;
+}
+
+void Pi_carry(unsigned long long Pi[]) {
+	for (int i = LEN - 1; i >= 0; i--)
+		if (Pi[i] >= BASE) {
+			assert(i && "long long Pi overflow.");
+			Pi[i - 1] += (Pi[i] & ~(BASE - 1)) >> SHIFT;
+			Pi[i] &= (BASE - 1);
+		}
 }

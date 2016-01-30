@@ -5,6 +5,7 @@ const unsigned long long BASE = (unsigned long long)1 << SHIFT;
 extern int VALID;
 extern int LEN;
 
+void Pi_carry(unsigned long long Pi[]);
 void add(unsigned long long dest[], unsigned src[]);
 void minus(unsigned long long dest[], unsigned src[]);
 void multiply(unsigned dest[], unsigned num);
