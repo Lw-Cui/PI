@@ -6,11 +6,12 @@ MPI	:=	Pi_mpi
 OMP	:=	Pi_omp
 TEST:=	Pi_test
 
-MPICC := mpic++
-CC	  := g++
+MPICC := mpiicc
+CC	  := icc
+GCC   := g++
 CFLAG := -g -O2 -Wall -fopenmp -offload-attribute-target=mic
 MFLAG := -g -O2 -Wall
-FLAG  := -g -O2 -Wall -fopenmp
+GFLAG  := -g -O2 -Wall -fopenmp
 
 all:
 	@echo "USAGE: \n     make TARGET[mpi, mic, omp, test]"
@@ -26,14 +27,14 @@ mic:
 	$(CC) $(OMP).o $(OP).o $(CFLAG) -o $@.out 
 
 omp:
-	$(CC) $(OMP).cpp -o $(OMP).o $(FLAG) -c
-	$(CC) $(OP).cpp -o $(OP).o $(FLAG) -c
-	$(CC) $(OMP).o $(OP).o -o $@.out $(FLAG)
+	$(GCC) $(OMP).cpp -o $(OMP).o $(GFLAG) -c
+	$(GCC) $(OP).cpp -o $(OP).o $(GFLAG) -c
+	$(GCC) $(OMP).o $(OP).o -o $@.out $(GFLAG)
 
 test:
-	$(CC) $(TEST).cpp -o $(TEST).o -c $(MFLAG)
-	$(CC) $(OP).cpp -o $(OP).o -c $(MFLAG)
-	$(CC) $(TEST).o $(OP).o -o $@.out $(MFLAG)
+	$(GCC) $(TEST).cpp -o $(TEST).o -c $(MFLAG)
+	$(GCC) $(OP).cpp -o $(OP).o -c $(MFLAG)
+	$(GCC) $(TEST).o $(OP).o -o $@.out $(MFLAG)
 
 clean:
 	rm *.o
