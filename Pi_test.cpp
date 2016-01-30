@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <cstdlib>
-#include <mpi.h>
 #include <cstring>
 #include <cassert>
 #include "Operation.h"
