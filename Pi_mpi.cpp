@@ -116,6 +116,8 @@ int main(int argc, char *argv[]) {
 	}
 	unsigned long long *sub_Pi = new unsigned long long[LEN];
 	unsigned long long *Pi = new unsigned long long[LEN];
+    memset(sub_Pi, 0, sizeof(unsigned long long) * LEN);
+    memset(Pi, 0, sizeof(unsigned long long) * LEN);
 	int compensation = 10;
 
 	sub_Pi[0] = compensation;
