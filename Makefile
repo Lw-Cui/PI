@@ -9,9 +9,9 @@ TEST:=	Pi_test.o
 CC	:=	mpic++
 CFLAG := -g -O2 -Wall -fopenmp
 
-all:	test mpi omp
+all: test mpi omp
 
-$(OBJ):	%.o: %.cpp $(HEAD)
+$(MPI) $(OMP) $(TEST) $(OP): %.o: %.cpp $(HEAD)
 	$(CC) $< -c -o $@ $(CFLAG)
 
 omp: $(OP) $(OMP)
@@ -28,4 +28,4 @@ clean:
 
 rebuild:	clean all
 
-.PHONY:	all clean rebuild omp mpi debug
+.PHONY:	all clean rebuild omp mpi test
