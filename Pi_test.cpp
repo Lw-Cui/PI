@@ -77,15 +77,9 @@ void test_shift_right() {
 	delete[] sub;
 }
 
-void test_print() {
-	unsigned tmp = 180150013;
-	print(tmp);
-}
-
 int main(int argc, char *argv[]) {
 	test_add_minus();
 	test_multiply_divide();
-	test_print();
 	test_shift_right();
 	test_carray();
 	return 0;
