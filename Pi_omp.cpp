@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <omp.h>
 #include <cstring>
-#include <ctime>
 #include <cassert>
 #include "Operation.h"
 int VALID = 1000000;
@@ -109,14 +108,15 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 
 
 int main(int argc, char *argv[]) {
-	int elapsed_time;
+	double elapsed_time;
 	if (argc == 2) {
 		VALID = atoi(argv[1]);
 		LEN = VALID / 8 + 2;
 	}
-	elapsed_time = -clock();
+	elapsed_time = -omp_get_wtime();
 
 	int core = omp_get_num_procs();
+	core = 24;
 	omp_set_num_threads(core);
 
 	unsigned long long compensation = 10;
@@ -127,22 +127,22 @@ int main(int argc, char *argv[]) {
 
 	bool flag = true;
 #pragma omp parallel for firstprivate(flag) schedule(dynamic)
-	for (unsigned k = 0; k < VALID; k++) {
+	for (unsigned k = 0; k < (unsigned)VALID; k++) {
 		if (!flag) continue;
 		flag = cal_sub_Pi(Pi[omp_get_thread_num()], k);
 	}
 
-#pragma omp parallel for private(i)
+	int i = 1;
+#pragma omp parallel for firstprivate(i)
 	for (int j = 0; j < LEN; j++)
-		for (int i = 1; i < core; i++)
+		for (i = 1; i < core; i++)
 			Pi[0][j] += Pi[i][j];
 
 	Pi[0][0] -= compensation * core;
 	Pi_carry(Pi[0]);
-
-	elapsed_time += clock();
+	elapsed_time += omp_get_wtime();
 
 	output(Pi[0]);
-	printf("%.3fs\n", (double)elapsed_time / CLOCKS_PER_SEC);
+	printf("%.3fs\n", elapsed_time);
 	return 0;
 }
