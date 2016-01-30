@@ -1,9 +1,10 @@
-#include <cstdio>
+#include <stdio.h>
 #include <cstdlib>
 #include <omp.h>
 #include <cstring>
 #include <cassert>
 #include "Operation.h"
+
 int VALID = 1000000;
 int LEN = VALID / 8 + 2;
 
@@ -60,7 +61,6 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 	return true;
 
 }
-
 
 /*
    BBP formula
@@ -126,6 +126,9 @@ int main(int argc, char *argv[]) {
 		Pi[i][0] += compensation;
 
 	bool flag = true;
+
+#pragma offload target(mic) inout(Pi)
+{
 #pragma omp parallel for firstprivate(flag) schedule(dynamic)
 	for (unsigned k = 0; k < (unsigned)VALID; k++) {
 		if (!flag) continue;
@@ -137,6 +140,7 @@ int main(int argc, char *argv[]) {
 	for (int j = 0; j < LEN; j++)
 		for (i = 1; i < core; i++)
 			Pi[0][j] += Pi[i][j];
+}
 
 	Pi[0][0] -= compensation * core;
 	Pi_carry(Pi[0]);
