@@ -1,4 +1,4 @@
-#include <stdio.h>
+
 #include <cstdlib>
 #include <omp.h>
 #include <cstring>
@@ -7,6 +7,7 @@
 
 int VALID = 1000000;
 int LEN = VALID / 8 + 2;
+const int MIC = 55, CPU = 20;
 
 void cal_fraction(unsigned sub[], unsigned numerator, unsigned denominator,
 		unsigned bit_num) {
@@ -115,34 +116,60 @@ int main(int argc, char *argv[]) {
 	}
 	elapsed_time = -omp_get_wtime();
 
-	int core = 55;
 	unsigned long long compensation = 10;
-	unsigned long long Pi[core][LEN];
+	unsigned long long Pi[MIC][LEN], tmp[CPU][LEN];
 	memset(Pi, 0, sizeof(Pi));
-	for (int i = 0; i < core; i++)
+	memset(tmp, 0, sizeof(tmp));
+
+	for (int i = 0; i < MIC; i++)
 		Pi[i][0] += compensation;
+	for (int i = 0; i < CPU; i++)
+		tmp[i][0] += compensation;
 
-	bool flag = true;
-
-#pragma offload target(mic) inout(Pi)
+#pragma omp parallel sections
 {
-#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(core)
-	for (unsigned k = 0; k < (unsigned)VALID; k++) {
-		if (!flag) continue;
-		flag = cal_sub_Pi(Pi[omp_get_thread_num()], k);
-	}
+#pragma omp section
+	{
+#pragma offload target(mic) inout(Pi)
+		{
+			bool flag = true;
+#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(MIC)
+			for (unsigned k = 0; k < (unsigned)VALID; k += 2) {
+				if (!flag) continue;
+				flag = cal_sub_Pi(Pi[omp_get_thread_num()], k);
+			}
 
-	int i = 1;
+			int i = 1;
 #pragma omp parallel for firstprivate(i)
-	for (int j = 0; j < LEN; j++)
-		for (i = 1; i < core; i++)
-			Pi[0][j] += Pi[i][j];
+			for (int j = 0; j < LEN; j++)
+				for (i = 1; i < MIC; i++)
+					Pi[0][j] += Pi[i][j];
+		}
+	}
+#pragma omp section
+	{
+		bool flag = true;
+#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(CPU)
+		for (unsigned k = 1; k < (unsigned)VALID; k += 2) {
+			if (!flag) continue;
+			flag = cal_sub_Pi(tmp[omp_get_thread_num()], k);
+		}
+
+		int i = 1;
+#pragma omp parallel for firstprivate(i)
+		for (int j = 0; j < LEN; j++)
+			for (i = 1; i < CPU; i++)
+				tmp[0][j] += tmp[i][j];
+		}
 }
 
-	Pi[0][0] -= compensation * core;
+	Pi[0][0] -= compensation * MIC;
 	Pi_carry(Pi[0]);
-	elapsed_time += omp_get_wtime();
+	tmp[0][0] -= compensation * CPU;
+	Pi_carry(tmp[0]);
+	add(Pi[0], tmp[0]);
 
+	elapsed_time += omp_get_wtime();
 	output(Pi[0]);
 	printf("%.3fs\n", elapsed_time);
 	return 0;
