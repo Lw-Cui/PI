@@ -115,9 +115,7 @@ int main(int argc, char *argv[]) {
 	}
 	elapsed_time = -omp_get_wtime();
 
-	int core = omp_get_num_procs();
-	omp_set_num_threads(core);
-
+	int core = 55;
 	unsigned long long compensation = 10;
 	unsigned long long Pi[core][LEN];
 	memset(Pi, 0, sizeof(Pi));
@@ -126,7 +124,9 @@ int main(int argc, char *argv[]) {
 
 	bool flag = true;
 
-#pragma omp parallel for firstprivate(flag) schedule(dynamic)
+#pragma offload target(mic) inout(Pi)
+{
+#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(core)
 	for (unsigned k = 0; k < (unsigned)VALID; k++) {
 		if (!flag) continue;
 		flag = cal_sub_Pi(Pi[omp_get_thread_num()], k);
@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
 	for (int j = 0; j < LEN; j++)
 		for (i = 1; i < core; i++)
 			Pi[0][j] += Pi[i][j];
+}
 
 	Pi[0][0] -= compensation * core;
 	Pi_carry(Pi[0]);

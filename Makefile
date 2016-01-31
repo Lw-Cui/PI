@@ -4,6 +4,7 @@ OBJ	:=	${patsubst %.cpp, %.o, $(SRC)}
 OP	:=	Operation
 MPI	:=	Pi_mpi
 OMP	:=	Pi_omp
+MIC	:= 	Pi_mic
 TEST:=	Pi_test
 
 MPICC := mpiicc
@@ -22,9 +23,9 @@ mpi:
 	$(MPICC) $(MPI).o $(OP).o -o $@.out $(MFLAG)
 
 mic:
-	$(CC) $(OMP).cpp -o $(OMP).o $(CFLAG) -c
+	$(CC) $(MIC).cpp -o $(MIC).o $(CFLAG) -c
 	$(CC) $(OP).cpp -o $(OP).o $(CFLAG) -c
-	$(CC) $(OMP).o $(OP).o $(CFLAG) -o $@.out 
+	$(CC) $(MIC).o $(OP).o $(CFLAG) -o $@.out 
 
 omp:
 	$(GCC) $(OMP).cpp -o $(OMP).o $(GFLAG) -c
