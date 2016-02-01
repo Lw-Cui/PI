@@ -1,4 +1,4 @@
-
+#include <cstdio>
 #include <cstdlib>
 #include <omp.h>
 #include <cstring>
@@ -63,50 +63,35 @@ bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
 
 }
 
-/*
-   BBP formula
-bool cal_sub_Pi(unsigned long long Pi[], unsigned k) {
-	unsigned *sub = new unsigned[LEN];
-	assert((unsigned long long)k * 8 + 6 < BASE && "sub Pi overflow.");
+const int compensation = 10;
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 4;
-	divide(sub, 8 * k + 1);
-	shift_right(sub, 4 * k);
-	add(Pi,	sub);
+void cal_device_Pi(unsigned long long Pi[], int thread, int start) {
+    unsigned long long *tmp = new unsigned long long[thread * LEN];
+    memset(tmp, 0, sizeof(unsigned long long) * thread * LEN);
+    unsigned long long *sub[thread];
 
-	bool zero = true;
-	for (int i = 0; i < LEN; i++)
-		if (sub[i] != 0)
-			zero = false;
-	if (zero) {
-		delete[] sub;
-		return false;
-	}
+    for (int i = 0; i < thread; i++) {
+        sub[i] = tmp + i * LEN;
+        sub[i][0] += compensation;
+    }
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 2;
-	divide(sub, 8 * k + 4);
-	shift_right(sub, 4 * k);
-	minus(Pi, sub);
+    bool flag = true;
+#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(thread)
+    for (unsigned k = start; k < (unsigned)VALID; k += 2) {
+        if (!flag) continue;
+        flag = cal_sub_Pi(sub[omp_get_thread_num()], k);
+    }
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 8 * k + 5);
-	shift_right(sub, 4 * k);
-	minus(Pi, sub);
+    memset(Pi, 0, sizeof(unsigned long long) * LEN);
+    int i = 0;
+#pragma omp parallel for private(i)
+    for (int j = 0; j < LEN; j++)
+        for (i = 0; i < thread; i++)
+            Pi[j] += sub[i][j];
 
-	memset(sub, 0, sizeof(unsigned) * LEN);
-	sub[0] = 1;
-	divide(sub, 8 * k + 6);
-	shift_right(sub, 4 * k);
-	minus(Pi, sub);
-
-	delete[] sub;
-	return true;
+    Pi[0] -= thread * compensation;
+    delete[] tmp;
 }
-*/
-
 
 int main(int argc, char *argv[]) {
 	double elapsed_time;
@@ -115,62 +100,23 @@ int main(int argc, char *argv[]) {
 		LEN = VALID / 8 + 2;
 	}
 	elapsed_time = -omp_get_wtime();
+	unsigned long long Pi_mic[LEN], Pi_cpu[LEN];
 
-	unsigned long long compensation = 10;
-	unsigned long long Pi[MIC][LEN], tmp[CPU][LEN];
-	memset(Pi, 0, sizeof(Pi));
-	memset(tmp, 0, sizeof(tmp));
+    char signal_var;
+#pragma offload target(mic:0) in(VALID, LEN) out(Pi_mic) \
+    mandatory signal(&signal_var) 
+    cal_device_Pi(Pi_mic, MIC, 1);
+    cal_device_Pi(Pi_cpu, CPU, 0);
+#pragma offload_wait target(mic:0) wait(&signal_var)
 
-	for (int i = 0; i < MIC; i++)
-		Pi[i][0] += compensation;
-	for (int i = 0; i < CPU; i++)
-		tmp[i][0] += compensation;
+    for (int i = 0; i < LEN; i++)
+        Pi_cpu[i] += Pi_mic[i];
 
-#pragma omp parallel sections
-{
-#pragma omp section
-	{
-#pragma offload target(mic) inout(Pi)
-		{
-			bool flag = true;
-#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(MIC)
-			for (unsigned k = 0; k < (unsigned)VALID; k += 2) {
-				if (!flag) continue;
-				flag = cal_sub_Pi(Pi[omp_get_thread_num()], k);
-			}
-
-			int i = 1;
-#pragma omp parallel for firstprivate(i)
-			for (int j = 0; j < LEN; j++)
-				for (i = 1; i < MIC; i++)
-					Pi[0][j] += Pi[i][j];
-		}
-	}
-#pragma omp section
-	{
-		bool flag = true;
-#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(CPU)
-		for (unsigned k = 1; k < (unsigned)VALID; k += 2) {
-			if (!flag) continue;
-			flag = cal_sub_Pi(tmp[omp_get_thread_num()], k);
-		}
-
-		int i = 1;
-#pragma omp parallel for firstprivate(i)
-		for (int j = 0; j < LEN; j++)
-			for (i = 1; i < CPU; i++)
-				tmp[0][j] += tmp[i][j];
-		}
-}
-
-	Pi[0][0] -= compensation * MIC;
-	Pi_carry(Pi[0]);
-	tmp[0][0] -= compensation * CPU;
-	Pi_carry(tmp[0]);
-	add(Pi[0], tmp[0]);
+    Pi_carry(Pi_cpu);
+    //Pi_cpu[0] -= compensation * (CPU + MIC);
 
 	elapsed_time += omp_get_wtime();
-	output(Pi[0]);
+	output(Pi_cpu);
 	printf("%.3fs\n", elapsed_time);
 	return 0;
 }
