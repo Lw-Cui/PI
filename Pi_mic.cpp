@@ -76,7 +76,7 @@ void cal_device_Pi(unsigned long long Pi[], int thread, int start) {
     }
 
     bool flag = true;
-#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(thread)
+//#pragma omp parallel for firstprivate(flag) schedule(dynamic) num_threads(thread)
     for (unsigned k = start; k < (unsigned)VALID; k += 2) {
         if (!flag) continue;
         flag = cal_sub_Pi(sub[omp_get_thread_num()], k);
@@ -84,12 +84,11 @@ void cal_device_Pi(unsigned long long Pi[], int thread, int start) {
 
     memset(Pi, 0, sizeof(unsigned long long) * LEN);
     int i = 0;
-#pragma omp parallel for private(i)
+//#pragma omp parallel for private(i)
     for (int j = 0; j < LEN; j++)
         for (i = 0; i < thread; i++)
             Pi[j] += sub[i][j];
 
-    Pi[0] -= thread * compensation;
     delete[] tmp;
 }
 
@@ -102,18 +101,26 @@ int main(int argc, char *argv[]) {
 	elapsed_time = -omp_get_wtime();
 	unsigned long long Pi_mic[LEN], Pi_cpu[LEN];
 
-    char signal_var;
-#pragma offload target(mic:0) in(VALID, LEN) out(Pi_mic) \
-    mandatory signal(&signal_var) 
-    cal_device_Pi(Pi_mic, MIC, 1);
-    cal_device_Pi(Pi_cpu, CPU, 0);
-#pragma offload_wait target(mic:0) wait(&signal_var)
+    omp_set_nested(true);
+#pragma omp parallel sections
+    {
+#pragma omp section
+#pragma offload target(mic) in(VALID, LEN) out(Pi_mic) mandatory
+        cal_device_Pi(Pi_mic, CPU, 0);
+#pragma omp section
+        cal_device_Pi(Pi_cpu, CPU, 0);
+    }
+
+    for (int i = 0; i < LEN; i++) {
+        printf("%d\nPi_cpu = %llu, mic = %llu\n", i, Pi_cpu[i], Pi_mic[i]);
+        assert(Pi_cpu[i] == Pi_mic[i] && "error!");
+    }
 
     for (int i = 0; i < LEN; i++)
         Pi_cpu[i] += Pi_mic[i];
 
     Pi_carry(Pi_cpu);
-    //Pi_cpu[0] -= compensation * (CPU + MIC);
+    Pi_cpu[0] -= compensation * (CPU + MIC);
 
 	elapsed_time += omp_get_wtime();
 	output(Pi_cpu);
