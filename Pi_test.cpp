@@ -6,6 +6,7 @@
 int VALID = 1000000;
 int LEN = VALID / 8 + 2;
 
+
 TEST(CarrayTest, add) {
 	unsigned long long *ptr = new unsigned long long[LEN];
 	ptr[0] = 0;
@@ -44,7 +45,7 @@ TEST(AddTest, minus) {
 		EXPECT_EQ(BASE - 2, ptr[i]);
 
 	add(ptr, ptr2);
-	EXPECT_EQ(1, ptr[0]);
+	EXPECT_EQ(2, ptr[0]);
 	for (int i = 1; i < LEN; i++)
 		EXPECT_EQ(LEN - i, ptr[i]);
 	delete[] ptr;

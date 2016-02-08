@@ -54,23 +54,15 @@ void divide(unsigned dest[], unsigned num) {
 	}
 }
 
-
-void print(unsigned num) {
-	for (int pos = SHIFT - 4; pos >= 0; pos -= 4)
-		printf("%01X", (num >> pos) & 0xF);
-}
-
-
 void output(unsigned long long array[]) {
 	printf("%llu.\n", array[0]);
-	int digit = 0;
-	for (int i = 1; digit < VALID; i++)
+	for (int i = 1, digit = 0; true; i++)
 		for (int pos = SHIFT - 4; pos >= 0; pos -= 4) {
 			printf("%01X", ((unsigned)array[i] >> pos) & 0xF);
-			if (++digit % 64 == 0)
-				printf("\n");
+			if (++digit % 64 == 0) printf("\n");
+			if (digit == VALID) goto END;
 		}
-	printf("\n");
+END: printf("\n");
 }
 
 void shift_right(unsigned sub[], unsigned num) {
