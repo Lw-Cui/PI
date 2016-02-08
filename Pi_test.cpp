@@ -6,8 +6,7 @@
 int VALID = 1000000;
 int LEN = VALID / 8 + 2;
 
-
-TEST(CarrayTest, add) {
+TEST(CarrayTest, simpleCarry) {
 	unsigned long long *ptr = new unsigned long long[LEN];
 	ptr[0] = 0;
 	ptr[1] = 0xFFFFFFFFFF;
@@ -17,7 +16,7 @@ TEST(CarrayTest, add) {
 	delete[] ptr;
 }
 
-TEST(divideTest, multi) {
+TEST(DivideTest, equalTest) {
 	unsigned *ptr = new unsigned[LEN];
 	for (int i = 0; i < LEN; i++)
 		ptr[i] = i;
@@ -45,14 +44,14 @@ TEST(AddTest, minus) {
 		EXPECT_EQ(BASE - 2, ptr[i]);
 
 	add(ptr, ptr2);
-	EXPECT_EQ(2, ptr[0]);
+	EXPECT_EQ(1, ptr[0]);
 	for (int i = 1; i < LEN; i++)
 		EXPECT_EQ(LEN - i, ptr[i]);
 	delete[] ptr;
 	delete[] ptr2;
 }
 
-TEST(ShiftTest, shift) {
+TEST(ShiftTest, naturalNumSimple) {
 	unsigned *sub = new unsigned[LEN];
 	for (int i = 0; i < LEN; i++)
 		sub[i] = 0xFFFFFFFF;
@@ -60,7 +59,22 @@ TEST(ShiftTest, shift) {
 	EXPECT_EQ(0x3FFFFFF, sub[LEN - 1]);
 	for (int i = 0; i < LEN - 1; i++)
 		EXPECT_EQ(0, sub[i]);
+	delete[] sub;
+}
 
+TEST(ShiftTest, EightTimes) {
+	unsigned *sub = new unsigned[LEN];
+	sub[0] = 0;
+	sub[1] = 0x19999999;
+	sub[2] = 0x99999999;
+	shift_right(sub, 8);
+	EXPECT_EQ(0x00199999, sub[1]);
+	EXPECT_EQ(0x99999999, sub[2]);
+	delete[] sub;
+}
+
+TEST(ShiftTest, naturalNum) {
+	unsigned *sub = new unsigned[LEN];
 	for (int i = 0; i < LEN; i++)
 		sub[i] = 0xABCDDCBE;
 	shift_right(sub, sizeof(unsigned) * 8 * (LEN - 2) + 4);
@@ -68,13 +82,6 @@ TEST(ShiftTest, shift) {
 	EXPECT_EQ(0xEABCDDCB, sub[LEN - 1]);
 	for (int i = 0; i < LEN - 2; i++)
 		EXPECT_EQ(0, sub[i]);
-
-	sub[0] = 0;
-	sub[1] = 0x19999999;
-	sub[2] = 0x99999999;
-	shift_right(sub, 8);
-	EXPECT_EQ(0x00199999, sub[1]);
-	EXPECT_EQ(0x99999999, sub[2]);
 	delete[] sub;
 }
 
